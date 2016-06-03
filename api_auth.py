@@ -48,7 +48,7 @@ def get_info():
         config.write(config_file)
 
     # Aggregate data and send to Reddit's authentication server (OAuth2)
-    app = {'id': app_id, 'secret': app_secret, 'username': username, 'password': password}
+    app = {'id': app_id.encode('utf-8'), 'secret': app_secret.encode('utf-8'), 'username': username.encode('utf-8'), 'password': password.encode('utf-8')}
     r = praw.Reddit(header)
     r.set_oauth_app_info(client_id=app['id'],client_secret=app['secret'],redirect_uri='http://127.0.0.1:65010/authorize_callback')
 
