@@ -1,0 +1,2 @@
+#!/bin/bash
+./bot.py 2> error.log
