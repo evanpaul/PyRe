@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 # A simple call-and-response bot
 # TO DO:
-# - Detailed Logs
-# - Save phrase and reply to new section of config file
+# - Detailed Logs (time, matches)
+# - Save target phrase and reply to new section of config file
+# - Handle commenting limit
+# - For remote server: nohup /path/to/test.py &
+#    - to find it again: ps ax | grep test.py
 import praw
 import api_auth
 import time
-
-SLEEP_TIME = 10 # Time to sleep between searches in seconds
+import sys
+SLEEP_TIME = 20 # Time to sleep between searches in seconds
 results = open("results.txt", "a")
 matches = 0
 # Parse saved API refresh token
@@ -21,6 +24,7 @@ print "Logged in as", user.name
 
 # Popular subreddits to avoid because of bot policies
 disallowed = [
+    "AskReddit",
     "AdviceAnimals",
     "anime",
     "askhistorians",
@@ -34,6 +38,7 @@ disallowed = [
     "giraffes",
     "gifs",
     "grindsmygears",
+    "Mariners",
     "me_irl",
     "misc",
     "movies",
@@ -56,7 +61,7 @@ reply_string = "Sneak peek*\n\nhttp://theoatmeal.com/comics/sneak_peek\n\n---\n*
 total = 0
 # Main loop
 while True:
-    print "Fetching..."
+    print "Fetching comments..."
     count = 0
     comments = praw.helpers.flatten_tree(r.get_comments("all", sort = "new", limit = 1000)) # Grabs up to 1000 latest comments
     for comment in comments:
@@ -64,11 +69,10 @@ while True:
         if target in comment.body.lower() and comment.submission.subreddit not in disallowed and comment.id not in checked:
             print "Match found!"
             matches += 1
-            print comment.permalink
-            results.write(comment.permalink)
+            to_write = "\n"+comment.permalink
+            results.write(to_write)
             comment.reply(reply_string)
         checked.append(comment.id)
-        print comment.id,"..."
     total += count
     print "Checked",count,"comments"
     print matches, "matches so far"
@@ -77,6 +81,19 @@ while True:
     if len(checked) > 2400:
         checked = []
     print "Sleeping for:",SLEEP_TIME,"seconds"
-    time.sleep(SLEEP_TIME)
+
+    # Progress bar
+    steps = SLEEP_TIME/2
+    t = SLEEP_TIME/steps
+    print '[          ]',
+    print '\b'*12,
+    for i in range(steps):
+        time.sleep(t)
+
+        print '\b.',
+        sys.stdout.flush()
+    print '\b]'
+
+    sys.stdout.flush()
 
 results.close()
